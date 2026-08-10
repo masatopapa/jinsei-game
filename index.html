@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人生選択ゲーム</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family:"Hiragino Maru Gothic ProN","BIZ UDGothic","Yu Gothic UI","Meiryo",sans-serif;
+    background:#FFDE59; color:#4A3520;
+    display:flex; flex-direction:column; min-height:100vh;
+    user-select:none;
+  }
+  button { font-family:inherit; cursor:pointer; border:none; }
+
+  /* ===== ヘッダー ===== */
+  #hdr {
+    display:flex; align-items:center; gap:.6em; padding:.5em 1em;
+    background:#F7A400; color:#fff; flex-wrap:wrap;
+  }
+  #hdr .logo { font-weight:bold; font-size:clamp(14px,1.6vw,20px); letter-spacing:.05em; }
+  #hdr .decade-badge {
+    background:#fff; color:#D33; font-weight:bold; border-radius:999px;
+    padding:.15em .8em; font-size:clamp(14px,1.6vw,20px);
+  }
+  #hdr .spacer { flex:1; }
+  .hbtn {
+    background:rgba(255,255,255,.25); color:#fff; border-radius:8px;
+    padding:.35em .7em; font-size:clamp(12px,1.3vw,16px); font-weight:bold;
+  }
+  .hbtn:active { background:rgba(255,255,255,.45); }
+
+  /* ===== メイン ===== */
+  #stage { flex:1; display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-start; padding:2vh 3vw; width:100%; max-width:1400px; margin:0 auto; }
+  .screen { width:100%; display:flex; flex-direction:column; align-items:center; gap:2.2vh; animation:fadein .3s; }
+  @keyframes fadein { from{opacity:0; transform:translateY(10px);} to{opacity:1;} }
+
+  h1.title { font-size:clamp(30px,6vw,72px); color:#4A3520; text-align:center;
+    text-shadow:3px 3px 0 #fff; letter-spacing:.04em; }
+  .subtitle { font-size:clamp(15px,2.2vw,26px); text-align:center; font-weight:bold; color:#7A5C30; }
+  h2.scr-title { font-size:clamp(24px,4vw,52px); text-align:center; }
+  .note { font-size:clamp(14px,1.8vw,22px); color:#8A6A3A; text-align:center; font-weight:bold; }
+  .accent { color:#D33; }
+
+  .panel { background:#FFF9E8; border-radius:20px; padding:2.5vh 3vw; box-shadow:0 4px 0 rgba(0,0,0,.08); }
+
+  .bigbtn {
+    background:#E85D2F; color:#fff; font-weight:bold;
+    font-size:clamp(20px,3vw,38px); padding:.55em 1.6em; border-radius:999px;
+    box-shadow:0 5px 0 #B4451F; transition:transform .05s;
+  }
+  .bigbtn:active { transform:translateY(4px); box-shadow:0 1px 0 #B4451F; }
+  .bigbtn.sub { background:#8AA1B5; box-shadow:0 5px 0 #66798a; }
+  .bigbtn.sub:active { box-shadow:0 1px 0 #66798a; }
+
+  /* ===== セットアップ ===== */
+  .opt-row { display:flex; gap:1.5vw; justify-content:center; flex-wrap:wrap; }
+  .opt-card {
+    background:#fff; border:4px solid #E8D6A8; border-radius:16px;
+    padding:1.6vh 2.2vw; font-size:clamp(17px,2.2vw,26px); font-weight:bold; color:#6A4E22;
+    min-width:8em; text-align:center;
+  }
+  .opt-card .opt-sub { display:block; font-size:.65em; color:#A08050; font-weight:normal; margin-top:.3em; }
+  .opt-card.sel { border-color:#E85D2F; background:#FFF0E5; color:#D33; }
+  .name-row { display:flex; gap:1vw; justify-content:center; flex-wrap:wrap; }
+  .name-row input {
+    font-family:inherit; font-size:clamp(15px,1.8vw,22px); font-weight:bold; text-align:center;
+    border:3px solid #E8D6A8; border-radius:10px; padding:.4em .5em; width:9em; background:#fff;
+  }
+  .setup-label { font-size:clamp(17px,2.2vw,26px); font-weight:bold; margin-top:1vh; }
+
+  /* ===== 職業カード ===== */
+  .job-row { display:flex; gap:2.5vw; justify-content:center; flex-wrap:wrap; }
+  .job-card {
+    background:#fff; border:5px solid #E8D6A8; border-radius:22px;
+    padding:2.5vh 2.5vw; width:min(38vw,380px); text-align:center;
+  }
+  .job-card:active { border-color:#E85D2F; }
+  .job-card .jname { font-size:clamp(26px,3.6vw,44px); font-weight:bold; }
+  .job-card .jsub { font-size:clamp(14px,1.8vw,20px); color:#8A6A3A; margin-top:.2em; }
+  .job-card ul { list-style:none; margin-top:1.2vh; font-size:clamp(14px,1.8vw,21px); font-weight:bold; }
+  .job-card li { margin:.35em 0; }
+  .job-card.kaisha .jname { color:#2779B5; }
+  .job-card.jiei .jname { color:#D8792B; }
+  .job-card.current { border-color:#F7A400; background:#FFF6DC; position:relative; }
+  .job-card.current::after {
+    content:"いまの仕事"; position:absolute; top:-1em; left:50%; transform:translateX(-50%);
+    background:#F7A400; color:#fff; border-radius:999px; padding:.1em .8em;
+    font-size:clamp(12px,1.5vw,17px); font-weight:bold;
+  }
+
+  /* ===== チーム色 ===== */
+  .t0 { --tc:#E4572E; }
+  .t1 { --tc:#2779B5; }
+  .t2 { --tc:#3E9B4F; }
+  .team-tag {
+    display:inline-block; background:var(--tc); color:#fff; font-weight:bold;
+    border-radius:999px; padding:.15em 1em; font-size:clamp(20px,3vw,36px);
+  }
+
+  /* ===== 結果カード（A/B/C/D）===== */
+  .out-row { display:flex; gap:1.8vw; justify-content:center; flex-wrap:wrap; align-items:stretch; }
+  .out-card {
+    border-radius:18px; padding:1.8vh 1.6vw; width:min(30vw,300px); text-align:center;
+    display:flex; flex-direction:column; gap:.5vh; align-items:center; justify-content:flex-start;
+    transition:transform .3s, opacity .3s;
+  }
+  .out-card .range { background:rgba(255,255,255,.75); border-radius:999px; padding:.1em .9em;
+    font-weight:bold; font-size:clamp(14px,1.8vw,21px); }
+  .out-card .letter { font-size:clamp(34px,5vw,64px); font-weight:bold; color:#D33; line-height:1.1; }
+  .out-card .desc { font-size:clamp(14px,1.8vw,21px); font-weight:bold; min-height:2.6em; }
+  .out-card .nums { font-size:clamp(14px,1.8vw,21px); font-weight:bold; line-height:1.5; }
+  .out-card .amt { font-size:clamp(18px,2.4vw,30px); font-weight:bold; }
+  .cA { background:#BFE4E6; }
+  .cB { background:#F6C9D0; }
+  .cC { background:#FFD971; }
+  .cD { background:#CBE6B8; }
+  .out-card.hit { transform:scale(1.06); box-shadow:0 0 0 6px #E85D2F, 0 6px 14px rgba(0,0,0,.2); }
+  .out-card.dim { opacity:.35; transform:scale(.94); }
+  .plus { color:#2779B5; }
+  .minus { color:#D33; }
+
+  /* ===== サイコロ ===== */
+  .dice-area { display:flex; flex-direction:column; align-items:center; gap:1.6vh; }
+  .dice {
+    width:clamp(90px,14vw,170px); height:clamp(90px,14vw,170px);
+    background:#fff; border-radius:18%; box-shadow:0 6px 12px rgba(0,0,0,.18), inset 0 -6px 0 rgba(0,0,0,.06);
+    display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); padding:12%;
+  }
+  .dice .pip { border-radius:50%; background:transparent; }
+  .dice .pip.on { background:#333; }
+  .dice.rolling { animation:tumble .5s linear infinite; }
+  @keyframes tumble {
+    0% { transform:rotate(0deg) scale(1); }
+    25% { transform:rotate(80deg) scale(.92) translateY(-12px); }
+    50% { transform:rotate(180deg) scale(1.06); }
+    75% { transform:rotate(280deg) scale(.94) translateY(-6px); }
+    100% { transform:rotate(360deg) scale(1); }
+  }
+  .dice.landed { animation:pop .4s; }
+  @keyframes pop { 0%{transform:scale(.6);} 60%{transform:scale(1.15);} 100%{transform:scale(1);} }
+  .die-result-text { font-size:clamp(26px,4vw,52px); font-weight:bold; }
+  .die-result-text b { color:#D33; font-size:1.4em; }
+  .face-btns { display:flex; gap:1.2vw; justify-content:center; flex-wrap:wrap; }
+  .face-btn { background:transparent; padding:0; border-radius:20%; }
+  .face-btn .dice { width:clamp(60px,9vw,110px); height:clamp(60px,9vw,110px); box-shadow:0 4px 0 rgba(0,0,0,.15); }
+  .face-btn:active .dice { transform:translateY(3px); }
+
+  /* ===== 途中経過 ===== */
+  .stat-list { display:flex; flex-direction:column; gap:1.2vh; width:min(90vw,760px); }
+  .stat-row { display:flex; justify-content:space-between; align-items:baseline;
+    font-size:clamp(18px,2.6vw,32px); font-weight:bold; border-bottom:3px dotted #E0CFA0; padding:.25em .2em; }
+  .stat-row .v { font-size:1.15em; }
+  .stat-row.take { border-bottom:none; background:#FFF0C8; border-radius:14px; padding:.4em .5em;
+    font-size:clamp(22px,3.4vw,44px); }
+  .stat-row.take .v { color:#D33; font-size:1.25em; }
+
+  .colchart { display:flex; align-items:flex-end; justify-content:center; gap:1.5vw;
+    height:clamp(130px,24vh,260px); margin-top:1vh; }
+  .col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    gap:.3em; width:clamp(46px,8vw,100px); height:100%; }
+  .col .cbar { width:100%; height:0; border-radius:10px 10px 4px 4px; transition:height .9s ease-out; }
+  .col .cval { font-size:clamp(11px,1.4vw,17px); font-weight:bold; color:#6A4E22; }
+  .col .clab { font-size:clamp(13px,1.7vw,21px); font-weight:bold; }
+
+  .bar-wrap { display:flex; flex-direction:column; gap:1.8vh; width:min(92vw,900px); }
+  .legend { display:flex; gap:1.2em; flex-wrap:wrap; justify-content:center; font-weight:bold;
+    font-size:clamp(12px,1.5vw,17px); }
+  .legend i { display:inline-block; width:.9em; height:.9em; border-radius:3px;
+    margin-right:.35em; vertical-align:-.05em; }
+  .bar-item .bar-label { display:flex; justify-content:space-between; font-weight:bold;
+    font-size:clamp(16px,2.2vw,28px); margin-bottom:.25em; }
+  .bar-item .bar-label .val { color:var(--tc); }
+  .bar-track { background:#F1E4C0; border-radius:999px; height:clamp(26px,4vh,44px);
+    overflow:hidden; display:flex; }
+  .bar-seg { height:100%; width:0; transition:width 1s ease-out; }
+  .mini-table { width:min(92vw,900px); border-collapse:collapse; font-size:clamp(13px,1.7vw,21px); font-weight:bold; }
+  .mini-table th,.mini-table td { padding:.35em .4em; text-align:right; border-bottom:2px solid #EADFC2; }
+  .mini-table th:first-child,.mini-table td:first-child { text-align:left; }
+  .mini-table thead th { color:#8A6A3A; border-bottom:3px solid #D8C48E; }
+
+  /* ===== 最終結果・表彰 ===== */
+  .award-row { display:flex; gap:1.5vw; justify-content:center; flex-wrap:wrap; }
+  .award {
+    background:#fff; border:4px solid #F7A400; border-radius:16px; padding:1.4vh 1.6vw;
+    text-align:center; min-width:14em;
+  }
+  .award .aname { font-size:clamp(14px,1.8vw,21px); font-weight:bold; color:#B07A00; }
+  .award .awinner { font-size:clamp(18px,2.4vw,30px); font-weight:bold; margin-top:.2em; }
+  .award .aval { font-size:clamp(14px,1.8vw,21px); font-weight:bold; color:#8A6A3A; }
+
+  /* ===== フッター（スコアボード）===== */
+  #foot { display:flex; gap:.8em; justify-content:center; flex-wrap:wrap; padding:.6em 1em; }
+  .chip {
+    background:#fff; border-radius:999px; padding:.25em 1em; font-weight:bold;
+    font-size:clamp(12px,1.5vw,18px); border:3px solid var(--tc); color:#4A3520;
+    display:flex; gap:.5em; align-items:center;
+  }
+  .chip .cn { color:var(--tc); }
+  .chip.now { background:var(--tc); color:#fff; }
+  .chip.now .cn { color:#fff; }
+
+  /* ===== イラスト ===== */
+  .illust-row { display:flex; gap:2.5vw; align-items:flex-end; justify-content:center; }
+  .illust { width:clamp(70px,9vw,130px); height:auto; }
+  .illust.sm { width:clamp(54px,7vw,100px); }
+  .inline-illust { height:clamp(44px,6vw,80px); width:auto; vertical-align:middle; margin:0 .15em; }
+  .job-illust { width:clamp(64px,8vw,116px); height:auto; display:block; margin:0 auto .5vh; }
+
+  /* ===== 紙吹雪 ===== */
+  .confetti { position:fixed; top:-5vh; font-size:clamp(16px,2.5vw,30px); pointer-events:none;
+    animation:fall linear forwards; z-index:50; }
+  @keyframes fall { to { transform:translateY(115vh) rotate(720deg); opacity:.9; } }
+</style>
+</head>
+<body>
+<div id="hdr">
+  <span class="logo">🎲 人生選択ゲーム</span>
+  <span id="hdr-badge"></span>
+  <span class="spacer"></span>
+  <button class="hbtn" data-a="toggleMode" id="mode-btn"></button>
+  <button class="hbtn" data-a="undo" id="undo-btn">↩ 1つ戻る</button>
+  <button class="hbtn" data-a="reset">はじめから</button>
+</div>
+<div id="stage"></div>
+<div id="foot"></div>
+
+<script>
+'use strict';
+
+/* ================= ゲームデータ =================
+   出典: Canvaスライド「人生選択ゲーム」/ スプレッドシート「選択ゲームプログラム」
+   金額は 万円/年（投資のみ10年分の一括額）
+   出目: 会社員 1・2→A / 3〜6→B、自営業 1・2→C / 3〜6→D
+   投資: 1→[0] / 2〜4→[1] / 5・6→[2]                      */
+const DECADES = [
+  { label:'20代', turn:'1回目',
+    kaisha:{ good:{L:'A',t:'サラリーマンとして順当に働く',inc:300,tax:60},
+             bad:{L:'B',t:'会社が合わず何度か転職',inc:200,tax:40} },
+    jiei:{ good:{L:'C',t:'フリーランスとして駆け出し中',inc:300,tax:40},
+           bad:{L:'D',t:'なかなか仕事が無く収入は少なかった',inc:180,tax:20} },
+    invest:[ {L:'A',r:'1',t:'買った株が値下がりした',amt:-300},
+             {L:'B',r:'2・3・4',t:'投資を始めたが結果は出ない',amt:0},
+             {L:'C',r:'5・6',t:'買った株が値上がりした',amt:300} ] },
+  { label:'30代', turn:'2回目',
+    kaisha:{ good:{L:'A',t:'サラリーマンとして順当に働く',inc:400,tax:80},
+             bad:{L:'B',t:'転職するが年収は上がらず',inc:300,tax:60} },
+    jiei:{ good:{L:'C',t:'フリーランスとして仕事が増える',inc:500,tax:80},
+           bad:{L:'D',t:'それほど仕事が増えなかった',inc:180,tax:20} },
+    invest:[ {L:'A',r:'1',t:'買った株が値下がりした',amt:-500},
+             {L:'B',r:'2・3・4',t:'買った株が値上がりした',amt:300},
+             {L:'C',r:'5・6',t:'買った株が値上がりした',amt:500} ] },
+  { label:'40代', turn:'3回目',
+    kaisha:{ good:{L:'A',t:'転職で収入アップ！',inc:500,tax:100},
+             bad:{L:'B',t:'サラリーマンとして順当に働く',inc:400,tax:80} },
+    jiei:{ good:{L:'C',t:'フリーランスとして仕事が増える',inc:600,tax:100},
+           bad:{L:'D',t:'それほど仕事が増えなかった',inc:180,tax:20} },
+    invest:[ {L:'A',r:'1',t:'買った株が値下がりした',amt:-500},
+             {L:'B',r:'2・3・4',t:'買った株が値上がりした',amt:300},
+             {L:'C',r:'5・6',t:'買った株が値上がりした',amt:500} ] },
+  { label:'50代', turn:'4回目',
+    kaisha:{ good:{L:'A',t:'出世して給料が増える',inc:600,tax:130},
+             bad:{L:'B',t:'出世はできず年収は上がらず',inc:400,tax:80} },
+    jiei:{ good:{L:'C',t:'会社を起業して社長になる',inc:1000,tax:200},
+           bad:{L:'D',t:'それほど仕事が増えなかった',inc:200,tax:20} },
+    invest:[ {L:'A',r:'1',t:'買った株が値下がりした',amt:-500},
+             {L:'B',r:'2・3・4',t:'買った株が値上がりした',amt:300},
+             {L:'C',r:'5・6',t:'買った株が値上がりした',amt:500} ] },
+  { label:'60代', turn:'5回目',
+    kaisha:{ good:{L:'A',t:'さらに出世して給料が増える',inc:700,tax:150},
+             bad:{L:'B',t:'出世はできず年収は上がらず',inc:400,tax:80} },
+    jiei:{ good:{L:'C',t:'社長として会社を経営',inc:1000,tax:200},
+           bad:{L:'D',t:'それほど仕事が増えなかった',inc:200,tax:20} },
+    invest:[ {L:'A',r:'1',t:'買った株が値下がりした',amt:-500},
+             {L:'B',r:'2・3・4',t:'買った株が値上がりした',amt:300},
+             {L:'C',r:'5・6',t:'買った株が値上がりした',amt:500} ] },
+  { label:'70代', turn:'6回目',
+    kaisha:{ good:{L:'A',t:'投資をしていたので年金以外に収入',inc:500,tax:100},
+             bad:{L:'B',t:'老後の準備不足 年金収入のみ',inc:300,tax:60} },
+    jiei:{ good:{L:'C',t:'継続して社長を続ける',inc:1000,tax:200},
+           bad:{L:'D',t:'仕事は引退せず年金と合算',inc:400,tax:40} },
+    invest:[ {L:'A',r:'1',t:'老後資金をだまし取られた',amt:-1000},
+             {L:'B',r:'2・3・4',t:'投資はしたが結果が出ず',amt:0},
+             {L:'C',r:'5・6',t:'持っていた株が爆上がりした',amt:1000} ] },
+];
+
+/* ================= 状態 ================= */
+let state = null;
+let history = [];
+let lastDie = null; // 画面サイコロの出目（演出中の一時値。確定時にstateへ）
+
+function initialState() {
+  return {
+    screen:'setup', diceMode:'real', teamCount:2,
+    names:['チーム①','チーム②','チーム③'],
+    teams:[], decadeIdx:0, teamIdx:0, seqIdx:0, pending:null,
+  };
+}
+state = initialState();
+
+function pushHistory() {
+  history.push(JSON.stringify(state));
+  if (history.length > 200) history.shift();
+}
+
+/* ================= ユーティリティ ================= */
+function fm(v) {
+  const s = Math.abs(v).toLocaleString('ja-JP');
+  return (v < 0 ? 'マイナス' : '') + s + '万円';
+}
+function fmBig(v) { // 億表示（例: 24000 → 2億4,000万円）
+  const neg = v < 0; const a = Math.abs(v);
+  let s;
+  if (a >= 10000) {
+    const oku = Math.floor(a / 10000), man = a % 10000;
+    s = oku + '億' + (man ? man.toLocaleString('ja-JP') + '万' : '') + '円';
+  } else {
+    s = a.toLocaleString('ja-JP') + '万円';
+  }
+  return (neg ? 'マイナス' : '') + s;
+}
+function signed(v) {
+  if (v > 0) return '<span class="plus">プラス ' + v.toLocaleString('ja-JP') + '万円</span>';
+  if (v < 0) return '<span class="minus">マイナス ' + Math.abs(v).toLocaleString('ja-JP') + '万円</span>';
+  return '±0万円';
+}
+function take(t) { return t.inc - t.tax + t.inv; }
+function jobName(job, dIdx) {
+  if (job === 'kaisha') return dIdx === 5 ? '元会社員' : '会社員';
+  return '自営業';
+}
+function jobSub(job, dIdx) {
+  if (job === 'kaisha') return dIdx === 5 ? '（元サラリーマン）' : '（サラリーマン）';
+  return '（フリーランス）';
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const PIPS = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+function diceHTML(n, cls, id) {
+  let cells = '';
+  for (let i = 0; i < 9; i++) cells += '<div class="pip' + (PIPS[n].includes(i) ? ' on' : '') + '"></div>';
+  return '<div class="dice ' + (cls||'') + '"' + (id ? ' id="'+id+'"' : '') + ' data-face="' + n + '">' + cells + '</div>';
+}
+function setDiceFace(el, n) {
+  el.dataset.face = n;
+  const pips = el.querySelectorAll('.pip');
+  pips.forEach((p, i) => p.classList.toggle('on', PIPS[n].includes(i)));
+}
+
+/* ================= 描画 ================= */
+const stage = document.getElementById('stage');
+const foot = document.getElementById('foot');
+
+function render() {
+  document.getElementById('mode-btn').textContent =
+    state.diceMode === 'real' ? '🎲 実物サイコロ' : '📱 画面サイコロ';
+  document.getElementById('undo-btn').style.display =
+    (history.length && state.screen !== 'setup') ? '' : 'none';
+  const inDecade = ['decadeSplash','roll','incomeResult','investChoice','investRoll','investResult','interimTeam','interimAll','jobChangeIntro','jobChange'].includes(state.screen);
+  document.getElementById('hdr-badge').innerHTML =
+    inDecade ? '<span class="decade-badge">' + DECADES[state.decadeIdx].label + '</span>' : '';
+
+  const fn = SCREENS[state.screen];
+  stage.innerHTML = '<div class="screen">' + fn() + '</div>';
+  renderFoot();
+  afterRender();
+}
+
+function renderFoot() {
+  const show = ['roll','incomeResult','investChoice','investRoll','investResult'].includes(state.screen);
+  if (!show) { foot.innerHTML = ''; return; }
+  foot.innerHTML = state.teams.map((t, i) =>
+    '<div class="chip t' + i + (i === state.teamIdx ? ' now' : '') + '">' +
+    '<span class="cn">' + esc(t.name) + '</span><span>' + fmBig(take(t)) + '</span></div>'
+  ).join('');
+}
+
+const SCREENS = {
+
+  /* ---- セットアップ ---- */
+  setup() {
+    const counts = [1,2,3].map(n =>
+      '<button class="opt-card' + (state.teamCount === n ? ' sel' : '') + '" data-a="setCount" data-v="' + n + '">' +
+      n + 'チーム' + (n === 1 ? '<span class="opt-sub">ひとりでも遊べるよ</span>' : '') + '</button>').join('');
+    const names = Array.from({length: state.teamCount}, (_, i) =>
+      '<input maxlength="10" value="' + esc(state.names[i]) + '" oninput="App.setName(' + i + ', this.value)">').join('');
+    const modes = [
+      ['real', '🎲 実物のサイコロ', '振ったサイコロの出目を画面でタップ'],
+      ['screen', '📱 画面のサイコロ', 'タップするとコロコロ転がるよ'],
+    ].map(([v, t, s]) =>
+      '<button class="opt-card' + (state.diceMode === v ? ' sel' : '') + '" data-a="setMode" data-v="' + v + '">' +
+      t + '<span class="opt-sub">' + s + '</span></button>').join('');
+    return `
+      <h1 class="title">人生選択ゲーム</h1>
+      <div class="subtitle">〜自分で選んだ進路でサイコロを振ってお金を稼ごう〜</div>
+      <div class="illust-row">${ill('kaisha','illust')}${ill('dice','illust sm')}${ill('bag','illust sm')}${ill('jiei','illust')}</div>
+      <div class="setup-label">チームの数をえらんでね</div>
+      <div class="opt-row">${counts}</div>
+      <div class="setup-label">チームの名前（そのままでもOK）</div>
+      <div class="name-row">${names}</div>
+      <div class="setup-label">サイコロのふり方</div>
+      <div class="opt-row">${modes}</div>
+      <button class="bigbtn" data-a="start" style="margin-top:2vh">ゲームスタート！</button>
+      <div class="note">マネリテDAO</div>`;
+  },
+
+  /* ---- 職業選択 ---- */
+  jobSelect() {
+    const i = state.seqIdx;
+    const hint = state.teams.length > 1 ? '<div class="note accent">※必ず1チームは違う職業を選んでね</div>' : '';
+    return `
+      <h2 class="scr-title"><span class="team-tag t${i}" style="--tc:${teamColor(i)}">${esc(state.teams[i].name)}</span>　お金の稼ぎ方を選んでください</h2>
+      <div class="job-row">
+        <button class="job-card kaisha" data-a="pickJob" data-v="kaisha">
+          ${ill('kaisha','job-illust')}
+          <div class="jname">会社員</div><div class="jsub">（サラリーマン）</div>
+          <ul><li>会社に勤めて働く</li><li class="accent">安定してるよ</li></ul>
+        </button>
+        <button class="job-card jiei" data-a="pickJob" data-v="jiei">
+          ${ill('jiei','job-illust')}
+          <div class="jname">自営業</div><div class="jsub">（フリーランス）</div>
+          <ul><li>自分で稼ぐフリーランス</li><li class="accent">稼げたら大きいよ</li><li>節税もできるよ</li></ul>
+        </button>
+      </div>
+      ${hint}
+      <div class="note">途中で1回だけ転職のチャンスがあるよ</div>`;
+  },
+
+  /* ---- 年代スタート ---- */
+  decadeSplash() {
+    const d = DECADES[state.decadeIdx];
+    const last = state.decadeIdx === 5 ? '<div class="scr-title accent" style="font-size:clamp(22px,3.5vw,46px)">ラスト！</div>' : '';
+    return `
+      ${last}
+      <h2 class="scr-title">${d.turn}のサイコロ ${ill('dice','inline-illust')}</h2>
+      <h1 class="title">${d.label}<span style="font-size:.5em">の平均年収</span></h1>
+      <button class="bigbtn" data-a="splashGo">${esc(state.teams[0].name)} からスタート！</button>`;
+  },
+
+  /* ---- サイコロ（収入）---- */
+  roll() {
+    const d = DECADES[state.decadeIdx];
+    const t = state.teams[state.teamIdx];
+    const tbl = d[t.job];
+    const cards =
+      outcomeCard(tbl.good, '1・2', '') + outcomeCard(tbl.bad, '3・4・5・6', '');
+    return `
+      <h2 class="scr-title"><span class="team-tag" style="--tc:${teamColor(state.teamIdx)}">${esc(t.name)}</span>
+        　${jobName(t.job, state.decadeIdx)} <span style="font-size:.6em">${jobSub(t.job, state.decadeIdx)}</span></h2>
+      <div class="note">${d.label}の平均年収が決まるよ！　どっちが出てほしい？</div>
+      <div class="out-row">${cards}</div>
+      ${diceArea('revealIncome')}`;
+  },
+
+  /* ---- 結果発表（収入）---- */
+  incomeResult() {
+    const d = DECADES[state.decadeIdx];
+    const t = state.teams[state.teamIdx];
+    const tbl = d[t.job];
+    const p = state.pending;
+    const hitGood = p.which === 'good';
+    const cards =
+      outcomeCard(tbl.good, '1・2', hitGood ? 'hit' : 'dim') +
+      outcomeCard(tbl.bad, '3・4・5・6', hitGood ? 'dim' : 'hit');
+    const o = tbl[p.which];
+    const net = (o.inc - o.tax) * 10;
+    return `
+      <h2 class="scr-title">結果発表！　<b class="accent">${p.die}</b> が出たので…</h2>
+      <div class="out-row">${cards}</div>
+      <div class="panel" style="text-align:center">
+        <div class="die-result-text">10年分で 手取り <b>+${net.toLocaleString('ja-JP')}万円</b></div>
+        <div class="note">平均年収なので10倍（10年分）が成績になるよ</div>
+      </div>
+      <button class="bigbtn" data-a="toInvest">投資チャンスへ！</button>`;
+  },
+
+  /* ---- 投資チャンス（結果を見せながら選ぶ）---- */
+  investChoice() {
+    const d = DECADES[state.decadeIdx];
+    const t = state.teams[state.teamIdx];
+    const note70 = state.decadeIdx === 5 ? '<div class="note accent">70代は投資結果がいつもと違うよ！</div>' : '';
+    return `
+      <h2 class="scr-title"><span class="team-tag" style="--tc:${teamColor(state.teamIdx)}">${esc(t.name)}</span>　投資チャンス！${ill('chart','inline-illust')}${ill('bag','inline-illust')}</h2>
+      <div class="note">投資をするかしないか選べます。サイコロの結果はこれ！　よく見て決めてね</div>
+      ${note70}
+      <div class="out-row">${d.invest.map(c => investCard(c, '')).join('')}</div>
+      <div class="opt-row" style="margin-top:1vh">
+        <button class="bigbtn" data-a="investYes">🎲 投資をする！</button>
+        <button class="bigbtn sub" data-a="investNo">投資をしない</button>
+      </div>`;
+  },
+
+  /* ---- サイコロ（投資）---- */
+  investRoll() {
+    const d = DECADES[state.decadeIdx];
+    const t = state.teams[state.teamIdx];
+    return `
+      <h2 class="scr-title"><span class="team-tag" style="--tc:${teamColor(state.teamIdx)}">${esc(t.name)}</span>　投資の結果は…？</h2>
+      <div class="out-row">${d.invest.map(c => investCard(c, '')).join('')}</div>
+      ${diceArea('revealInvest')}`;
+  },
+
+  /* ---- 結果発表(投資) ---- */
+  investResult() {
+    const d = DECADES[state.decadeIdx];
+    const t = state.teams[state.teamIdx];
+    const p = state.pending;
+    const cards = d.invest.map((c, i) => investCard(c, i === p.idx ? 'hit' : 'dim')).join('');
+    const c = d.invest[p.idx];
+    return `
+      <h2 class="scr-title">投資結果！　<b class="accent">${p.die}</b> が出たので…</h2>
+      <div class="out-row">${cards}</div>
+      <div class="panel" style="text-align:center">
+        <div class="die-result-text">${signed(c.amt)}</div>
+      </div>
+      <button class="bigbtn" data-a="afterInvest">つぎへ</button>`;
+  },
+
+  /* ---- 途中経過（1チームずつ大きく）---- */
+  interimTeam() {
+    const i = state.seqIdx;
+    const t = state.teams[i];
+    const nextLabel = i < state.teams.length - 1 ? 'つぎのチーム！' : 'みんなの結果を見る！';
+    return `
+      <h2 class="scr-title">${ill('bag','inline-illust')} 途中経過はっぴょう！</h2>
+      <div><span class="team-tag" style="--tc:${teamColor(i)}; font-size:clamp(26px,4vw,52px)">${esc(t.name)}</span>
+        　<span class="note" style="display:inline">${jobName(t.job, state.decadeIdx)}</span></div>
+      ${colChartHTML(t)}
+      <div class="panel stat-list">
+        <div class="stat-row"><span>年収合計</span><span class="v">${fmBig(t.inc)}</span></div>
+        <div class="stat-row"><span>税金合計</span><span class="v">${fmBig(t.tax)}</span></div>
+        <div class="stat-row"><span>投資</span><span class="v">${signed(t.inv)}</span></div>
+        <div class="stat-row take"><span>手取り合計</span><span class="v" id="countup" data-target="${take(t)}">0万円</span></div>
+      </div>
+      <button class="bigbtn" data-a="interimNext">${nextLabel}</button>`;
+  },
+
+  /* ---- 途中経過（全チーム比較）---- */
+  interimAll() {
+    return `
+      <h2 class="scr-title">${DECADES[state.decadeIdx].label}が終わったよ！</h2>
+      ${barsHTML()}
+      ${miniTableHTML()}
+      <div class="note">同じ年収でも手取り額が違う！</div>
+      <button class="bigbtn" data-a="interimAllNext">${
+        state.decadeIdx === 1 ? '転職チャンスへ！' : DECADES[state.decadeIdx + 1].turn + '（' + DECADES[state.decadeIdx + 1].label + '）へ！'
+      }</button>`;
+  },
+
+  /* ---- 転職チャンス ---- */
+  jobChangeIntro() {
+    return `
+      <h2 class="scr-title">ここで転職チャンス！</h2>
+      <div class="panel" style="text-align:center">
+        <div class="die-result-text">1回だけ職業を変更できます</div>
+        <div class="note">転職できるのはここだけ！　よく考えてね</div>
+      </div>
+      <button class="bigbtn" data-a="jcGo">${esc(state.teams[0].name)} から決める！</button>`;
+  },
+
+  jobChange() {
+    const i = state.seqIdx;
+    const t = state.teams[i];
+    const cur = t.job;
+    const cards = ['kaisha','jiei'].map(j => `
+      <button class="job-card ${j}${j === cur ? ' current' : ''}" data-a="jcPick" data-v="${j}">
+        ${ill(j,'job-illust')}
+        <div class="jname">${j === 'kaisha' ? '会社員' : '自営業'}</div>
+        <div class="jsub">${j === 'kaisha' ? '（サラリーマン）' : '（フリーランス）'}</div>
+        <ul>${j === 'kaisha'
+          ? '<li>会社に勤めて働く</li><li class="accent">安定してるよ</li>'
+          : '<li>自分で稼ぐフリーランス</li><li class="accent">稼げたら大きいよ</li><li>節税もできるよ</li>'}</ul>
+      </button>`).join('');
+    return `
+      <h2 class="scr-title"><span class="team-tag" style="--tc:${teamColor(i)}">${esc(t.name)}</span>　転職する？　そのまま？</h2>
+      <div class="job-row">${cards}</div>
+      <div class="note">そのままでいくなら、いまの仕事をもう一度タップしてね</div>`;
+  },
+
+  /* ---- 最終結果 ---- */
+  finalTeam() {
+    const i = state.seqIdx;
+    const t = state.teams[i];
+    const nextLabel = i < state.teams.length - 1 ? 'つぎのチーム！' : 'みんなの結果を見る！';
+    return `
+      <h2 class="scr-title">${ill('trophy','inline-illust')} 最終結果はっぴょう！</h2>
+      <div><span class="team-tag" style="--tc:${teamColor(i)}; font-size:clamp(26px,4vw,52px)">${esc(t.name)}</span></div>
+      ${colChartHTML(t)}
+      <div class="panel stat-list">
+        <div class="stat-row"><span>稼いだお金（年収合計）</span><span class="v">${fmBig(t.inc)}</span></div>
+        <div class="stat-row"><span>納めた税金</span><span class="v">${fmBig(t.tax)}</span></div>
+        <div class="stat-row"><span>投資の結果</span><span class="v">${signed(t.inv)}</span></div>
+        <div class="stat-row take"><span>手元に残ったお金</span><span class="v" id="countup" data-target="${take(t)}">0万円</span></div>
+      </div>
+      <button class="bigbtn" data-a="finalNext">${nextLabel}</button>`;
+  },
+
+  finalAll() {
+    const multi = state.teams.length > 1;
+    let awards = '';
+    if (multi) {
+      const by = (f) => state.teams.reduce((a, b) => f(b) > f(a) ? b : a);
+      const defs = [
+        ['💰 いちばん稼いだで賞', by(t => t.inc), t => fmBig(t.inc)],
+        ['🏛️ いちばん税金を納めたで賞', by(t => t.tax), t => fmBig(t.tax)],
+        ['👛 いちばん手元に残ったで賞', by(t => take(t)), t => fmBig(take(t))],
+      ];
+      awards = '<div class="award-row">' + defs.map(([name, t, fv]) =>
+        '<div class="award"><div class="aname">' + name + '</div>' +
+        '<div class="awinner" style="color:' + teamColor(state.teams.indexOf(t)) + '">' + esc(t.name) + '</div>' +
+        '<div class="aval">' + fv(t) + '</div></div>').join('') + '</div>';
+    }
+    return `
+      <h2 class="scr-title">${ill('trophy','inline-illust')} 最終結果！</h2>
+      ${barsHTML()}
+      ${miniTableHTML()}
+      ${awards}
+      <button class="bigbtn" data-a="toKaisetsu">まとめ</button>`;
+  },
+
+  kaisetsu() {
+    return `
+      <h2 class="scr-title">まとめ</h2>
+      <div class="panel" style="max-width:900px">
+        <div style="font-size:clamp(18px,2.6vw,32px); font-weight:bold; line-height:1.8; text-align:center">
+          ゲームでは2択で選んだ稼ぎ方と<span class="accent">運</span>で結果が変わりましたが、<br>
+          実際にはもっと細かい選択肢があって、<br>
+          運だけではない<span class="accent">努力</span>で結果は変わります！
+        </div>
+      </div>
+      <div class="note">お金の稼ぎ方・税金・投資、ぜんぶ「自分で選ぶ」ことが大事！</div>
+      <div class="illust-row">${ill('kaisha','illust sm')}${ill('jiei','illust sm')}</div>
+      <button class="bigbtn" data-a="reset">もういちど遊ぶ</button>
+      <div class="note">マネリテDAO　人生選択ゲーム</div>`;
+  },
+};
+
+/* ---- イラスト（ゆるまる手描き風SVG）---- */
+const ILL = {
+  kaisha: '<path d="M33 112 Q33 78 60 78 Q87 78 87 112 Z" fill="#3E6C9E" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><path d="M52 80 L60 91 L68 80 Q60 76 52 80 Z" fill="#FFFDF5" stroke="#6B4F2E" stroke-width="2.5" stroke-linejoin="round"/><path d="M57 87 L60 83 L63 87 L60 101 Z" fill="#D9534F" stroke="#6B4F2E" stroke-width="2" stroke-linejoin="round"/><circle cx="60" cy="44" r="26" fill="#FFE3C9" stroke="#6B4F2E" stroke-width="3"/><path d="M35 42 Q35 18 60 18 Q85 18 85 42 Q75 28 60 28 Q45 28 35 42 Z" fill="#5B4230" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="46" r="3.2" fill="#4A3520"/><circle cx="70" cy="46" r="3.2" fill="#4A3520"/><path d="M54 56 Q60 61 66 56" fill="none" stroke="#4A3520" stroke-width="3" stroke-linecap="round"/><circle cx="42" cy="53" r="4.5" fill="#FFB3A0" opacity=".75"/><circle cx="78" cy="53" r="4.5" fill="#FFB3A0" opacity=".75"/>',
+  jiei: '<path d="M33 112 Q33 78 60 78 Q87 78 87 112 Z" fill="#3FA796" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><circle cx="60" cy="44" r="26" fill="#FFE3C9" stroke="#6B4F2E" stroke-width="3"/><path d="M34 40 Q30 16 60 14 Q90 16 86 40 Q60 28 34 40 Z" fill="#E8833A" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><circle cx="63" cy="13" r="4" fill="#E8833A" stroke="#6B4F2E" stroke-width="2.5"/><circle cx="50" cy="46" r="3.2" fill="#4A3520"/><circle cx="70" cy="46" r="3.2" fill="#4A3520"/><path d="M53 54 Q60 62 67 54 Z" fill="#E2766C" stroke="#4A3520" stroke-width="2.5" stroke-linejoin="round"/><circle cx="42" cy="53" r="4.5" fill="#FFB3A0" opacity=".75"/><circle cx="78" cy="53" r="4.5" fill="#FFB3A0" opacity=".75"/><rect x="41" y="94" width="38" height="13" rx="3" fill="#A7AEBB" stroke="#6B4F2E" stroke-width="2.5"/><line x1="44" y1="97.5" x2="76" y2="97.5" stroke="#6B4F2E" stroke-width="1.5"/>',
+  dice: '<g transform="rotate(-10 60 62)"><rect x="28" y="30" width="64" height="64" rx="15" fill="#FFFDF5" stroke="#6B4F2E" stroke-width="3.5"/><circle cx="45" cy="47" r="6" fill="#4A3520"/><circle cx="75" cy="47" r="6" fill="#4A3520"/><circle cx="60" cy="62" r="6" fill="#E4572E"/><circle cx="45" cy="77" r="6" fill="#4A3520"/><circle cx="75" cy="77" r="6" fill="#4A3520"/></g><path d="M14 38 L24 43" stroke="#6B4F2E" stroke-width="3" stroke-linecap="round"/><path d="M20 24 L28 31" stroke="#6B4F2E" stroke-width="3" stroke-linecap="round"/><path d="M104 32 L95 38" stroke="#6B4F2E" stroke-width="3" stroke-linecap="round"/>',
+  bag: '<path d="M47 36 Q40 24 50 20 L54 30 Q60 27 66 30 L70 20 Q80 24 73 36 Z" fill="#F0B24A" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><path d="M45 38 Q22 58 26 80 Q30 102 60 102 Q90 102 94 80 Q98 58 75 38 Q60 32 45 38 Z" fill="#F7C948" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><path d="M44 38 Q60 44 76 38" fill="none" stroke="#6B4F2E" stroke-width="3" stroke-linecap="round"/><text x="60" y="84" font-size="36" font-weight="bold" text-anchor="middle" fill="#8A5A00">¥</text>',
+  chart: '<path d="M24 20 L24 96 L100 96" fill="none" stroke="#6B4F2E" stroke-width="3.5" stroke-linecap="round"/><path d="M32 84 L50 64 L62 74 L86 42" fill="none" stroke="#E4572E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M92 32 L80 38 L90 48 Z" fill="#E4572E"/><circle cx="40" cy="38" r="13" fill="#F7C948" stroke="#6B4F2E" stroke-width="3"/><text x="40" y="44" font-size="16" font-weight="bold" text-anchor="middle" fill="#8A5A00">¥</text>',
+  trophy: '<path d="M38 22 L82 22 L80 52 Q78 74 60 74 Q42 74 40 52 Z" fill="#F7C948" stroke="#6B4F2E" stroke-width="3" stroke-linejoin="round"/><path d="M38 28 Q20 30 26 46 Q30 56 42 56" fill="none" stroke="#6B4F2E" stroke-width="3.5" stroke-linecap="round"/><path d="M82 28 Q100 30 94 46 Q90 56 78 56" fill="none" stroke="#6B4F2E" stroke-width="3.5" stroke-linecap="round"/><rect x="54" y="74" width="12" height="10" fill="#F0B24A" stroke="#6B4F2E" stroke-width="3"/><rect x="42" y="84" width="36" height="12" rx="4" fill="#E8833A" stroke="#6B4F2E" stroke-width="3"/><text x="60" y="54" font-size="26" text-anchor="middle" fill="#FFFDF5">★</text>',
+};
+function ill(name, cls) { return '<svg class="' + cls + '" viewBox="0 0 120 120">' + ILL[name] + '</svg>'; }
+
+/* ---- 部品 ---- */
+function teamColor(i) { return ['#E4572E','#2779B5','#3E9B4F'][i]; }
+const DEC_COLORS = ['#EF5350','#FB8C00','#F5C518','#66BB6A','#42A5F5','#AB47BC'];
+function letterClass(L) { return 'c' + L; }
+function decNet(h) { return h.inc - h.tax + h.inv; }
+function colChartHTML(t) {
+  const max = Math.max(...t.hist.map(decNet), 1);
+  return '<div class="panel" style="width:min(92vw,900px)">' +
+    '<div class="note">各年代の手取り（投資込み）</div><div class="colchart">' +
+    t.hist.map((h, k) => `
+      <div class="col">
+        <div class="cval">${decNet(h).toLocaleString('ja-JP')}万</div>
+        <div class="cbar" style="background:${DEC_COLORS[k]}" data-h="${Math.max(4, decNet(h) / max * 100)}"></div>
+        <div class="clab">${h.label}</div>
+      </div>`).join('') + '</div></div>';
+}
+function outcomeCard(o, range, cls) {
+  return `<div class="out-card ${letterClass(o.L)} ${cls}">
+    <div class="range">${range} が出たら</div>
+    <div class="letter">${o.L}</div>
+    <div class="desc">${o.t}</div>
+    <div class="nums">年収：${fm(o.inc)}<br>税金：${fm(o.tax)}<br>手取り：${fm(o.inc - o.tax)}</div>
+  </div>`;
+}
+function investCard(c, cls) {
+  return `<div class="out-card ${letterClass(c.L)} ${cls}">
+    <div class="range">${c.r} が出たら</div>
+    <div class="letter">${c.L}</div>
+    <div class="desc">${c.t}</div>
+    <div class="amt">${signed(c.amt)}<br><span style="font-size:.6em">（10年分）</span></div>
+  </div>`;
+}
+function diceArea(afterAction) {
+  if (state.diceMode === 'real') {
+    const btns = [1,2,3,4,5,6].map(n =>
+      '<button class="face-btn" data-a="' + afterAction + '" data-v="' + n + '">' + diceHTML(n) + '</button>').join('');
+    return `<div class="dice-area">
+      <div class="die-result-text">${ill('dice','inline-illust')} 実物のサイコロを振ってね！</div>
+      <div class="note">出た目をタップ</div>
+      <div class="face-btns">${btns}</div>
+    </div>`;
+  }
+  return `<div class="dice-area">
+    ${diceHTML(1, '', 'the-dice')}
+    <div class="die-result-text" id="die-text" style="visibility:hidden">＿</div>
+    <button class="bigbtn" id="spin-btn" data-a="spin" data-after="${afterAction}">サイコロをふる！</button>
+  </div>`;
+}
+function barsHTML() {
+  const vals = state.teams.map(take);
+  const max = Math.max(...vals, 1);
+  const legend = '<div class="legend">' + state.teams[0].hist.map((h, k) =>
+    '<span><i style="background:' + DEC_COLORS[k] + '"></i>' + h.label + '</span>').join('') + '</div>';
+  return '<div class="panel bar-wrap">' + legend + state.teams.map((t, i) => `
+    <div class="bar-item" style="--tc:${teamColor(i)}">
+      <div class="bar-label"><span style="color:${teamColor(i)}">${esc(t.name)}（${jobName(t.job, state.decadeIdx)}）</span>
+        <span class="val">${fmBig(take(t))}</span></div>
+      <div class="bar-track">${t.hist.map((h, k) =>
+        '<div class="bar-seg" style="background:' + DEC_COLORS[k] + '" data-w="' + (decNet(h) / max * 100) + '"></div>').join('')}</div>
+    </div>`).join('') + '<div class="note">手取り合計（手元に残ったお金）　色は年代ごとの内訳だよ</div></div>';
+}
+function miniTableHTML() {
+  return `<table class="mini-table"><thead>
+    <tr><th></th><th>年収合計</th><th>税金合計</th><th>投資</th><th>手取り合計</th></tr></thead><tbody>` +
+    state.teams.map((t, i) =>
+      '<tr><td style="color:' + teamColor(i) + '">' + esc(t.name) + '</td>' +
+      '<td>' + fmBig(t.inc) + '</td><td>' + fmBig(t.tax) + '</td>' +
+      '<td>' + signed(t.inv) + '</td><td><b>' + fmBig(take(t)) + '</b></td></tr>').join('') +
+    '</tbody></table>';
+}
+
+/* ---- 描画後の演出 ---- */
+function afterRender() {
+  const cu = document.getElementById('countup');
+  if (cu) {
+    const target = Number(cu.dataset.target);
+    const t0 = performance.now(), dur = 1200;
+    (function tick(now) {
+      const p = Math.max(0, Math.min(1, (now - t0) / dur));
+      const eased = 1 - Math.pow(1 - p, 3);
+      cu.textContent = fmBig(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  }
+  document.querySelectorAll('.bar-seg').forEach(el => {
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.width = el.dataset.w + '%'; }));
+  });
+  document.querySelectorAll('.cbar').forEach(el => {
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.height = el.dataset.h + '%'; }));
+  });
+  if (state.screen === 'finalAll') confetti();
+}
+
+let confettiDone = false;
+function confetti() {
+  if (confettiDone) return;
+  confettiDone = true;
+  const em = ['🎉','✨','💰','🪙','🎊'];
+  for (let i = 0; i < 50; i++) {
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.textContent = em[i % em.length];
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.animationDuration = (2.5 + Math.random() * 2.5) + 's';
+    s.style.animationDelay = (Math.random() * 1.5) + 's';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 7000);
+  }
+}
+
+/* ================= 進行ロジック ================= */
+function applyIncomeDie(die) {
+  const d = DECADES[state.decadeIdx];
+  const t = state.teams[state.teamIdx];
+  const which = die <= 2 ? 'good' : 'bad';
+  const o = d[t.job][which];
+  t.inc += o.inc * 10;
+  t.tax += o.tax * 10;
+  t.hist.push({ label: d.label, inc: o.inc * 10, tax: o.tax * 10, inv: 0 });
+  state.pending = { die, which };
+  state.screen = 'incomeResult';
+}
+function applyInvestDie(die) {
+  const d = DECADES[state.decadeIdx];
+  const t = state.teams[state.teamIdx];
+  const idx = die === 1 ? 0 : (die <= 4 ? 1 : 2);
+  t.inv += d.invest[idx].amt;
+  t.hist[t.hist.length - 1].inv += d.invest[idx].amt;
+  state.pending = { die, idx };
+  state.screen = 'investResult';
+}
+function advanceAfterTurn() {
+  if (state.teamIdx < state.teams.length - 1) {
+    state.teamIdx++;
+    state.screen = 'roll';
+  } else {
+    state.seqIdx = 0;
+    state.screen = state.decadeIdx === 5 ? 'finalTeam' : 'interimTeam';
+  }
+}
+function nextDecade() {
+  state.decadeIdx++;
+  state.teamIdx = 0;
+  state.screen = 'decadeSplash';
+}
+
+/* ================= アクション ================= */
+const actions = {
+  setCount(ds) { state.teamCount = Number(ds.v); render(); },
+  setMode(ds) { state.diceMode = ds.v; render(); },
+  start() {
+    pushHistory();
+    state.teams = Array.from({length: state.teamCount}, (_, i) => ({
+      name: (state.names[i] || 'チーム' + (i + 1)).trim() || 'チーム' + (i + 1),
+      job: null, inc: 0, tax: 0, inv: 0, hist: [],
+    }));
+    state.seqIdx = 0;
+    state.screen = 'jobSelect';
+    render();
+  },
+  pickJob(ds) {
+    pushHistory();
+    state.teams[state.seqIdx].job = ds.v;
+    state.seqIdx++;
+    if (state.seqIdx >= state.teams.length) {
+      state.decadeIdx = 0;
+      state.screen = 'decadeSplash';
+    }
+    render();
+  },
+  splashGo() { pushHistory(); state.teamIdx = 0; state.screen = 'roll'; render(); },
+
+  spin(ds) {
+    const btn = document.getElementById('spin-btn');
+    const dice = document.getElementById('the-dice');
+    if (!btn || !dice || dice.classList.contains('rolling')) return;
+    btn.style.visibility = 'hidden';
+    dice.classList.add('rolling');
+    const iv = setInterval(() => setDiceFace(dice, 1 + Math.floor(Math.random() * 6)), 90);
+    setTimeout(() => {
+      clearInterval(iv);
+      dice.classList.remove('rolling');
+      lastDie = 1 + Math.floor(Math.random() * 6);
+      setDiceFace(dice, lastDie);
+      dice.classList.add('landed');
+      const txt = document.getElementById('die-text');
+      txt.innerHTML = '<b>' + lastDie + '</b> が出た！';
+      txt.style.visibility = '';
+      btn.textContent = '結果はっぴょう！';
+      btn.dataset.a = ds.after;
+      btn.dataset.v = lastDie;
+      btn.style.visibility = '';
+    }, 1300);
+  },
+
+  revealIncome(ds) { pushHistory(); applyIncomeDie(Number(ds.v)); render(); },
+  toInvest() { pushHistory(); state.screen = 'investChoice'; render(); },
+  investYes() { pushHistory(); state.screen = 'investRoll'; render(); },
+  investNo() { pushHistory(); advanceAfterTurn(); render(); },
+  revealInvest(ds) { pushHistory(); applyInvestDie(Number(ds.v)); render(); },
+  afterInvest() { pushHistory(); advanceAfterTurn(); render(); },
+
+  interimNext() {
+    pushHistory();
+    if (state.seqIdx < state.teams.length - 1) state.seqIdx++;
+    else state.screen = 'interimAll';
+    render();
+  },
+  interimAllNext() {
+    pushHistory();
+    if (state.decadeIdx === 1) { state.seqIdx = 0; state.screen = 'jobChangeIntro'; }
+    else nextDecade();
+    render();
+  },
+  jcGo() { pushHistory(); state.seqIdx = 0; state.screen = 'jobChange'; render(); },
+  jcPick(ds) {
+    pushHistory();
+    state.teams[state.seqIdx].job = ds.v;
+    state.seqIdx++;
+    if (state.seqIdx >= state.teams.length) nextDecade();
+    render();
+  },
+  finalNext() {
+    pushHistory();
+    if (state.seqIdx < state.teams.length - 1) state.seqIdx++;
+    else state.screen = 'finalAll';
+    render();
+  },
+  toKaisetsu() { pushHistory(); state.screen = 'kaisetsu'; render(); },
+
+  toggleMode() {
+    state.diceMode = state.diceMode === 'real' ? 'screen' : 'real';
+    render();
+  },
+  undo() {
+    if (!history.length) return;
+    state = JSON.parse(history.pop());
+    render();
+  },
+  reset() {
+    if (state.screen !== 'kaisetsu' && state.screen !== 'setup' &&
+        !confirm('ゲームをはじめからやり直しますか？')) return;
+    const mode = state.diceMode, count = state.teamCount, names = state.names;
+    state = initialState();
+    state.diceMode = mode; state.teamCount = count; state.names = names;
+    history = [];
+    confettiDone = false;
+    render();
+  },
+};
+
+window.App = {
+  setName(i, v) { state.names[i] = v; },
+};
+
+document.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-a]');
+  if (!el) return;
+  const fn = actions[el.dataset.a];
+  if (fn) fn(el.dataset);
+});
+
+render();
+</script>
+</body>
+</html>
