@@ -439,10 +439,16 @@ const SCREENS = {
   decadeSplash() {
     const d = DECADES[state.decadeIdx];
     const last = state.decadeIdx === 5 ? '<div class="scr-title accent" style="font-size:clamp(22px,3.5vw,46px)">ラスト！</div>' : '';
+    const job70 = state.decadeIdx === 5 ? `
+      <div class="panel" style="text-align:center; font-size:clamp(20px,3vw,40px); font-weight:bold; color:#4A3520; line-height:1.5">
+        70代の会社員は退職して<span class="accent">「元会社員」</span>になるよ<br>
+        自営業は<span class="accent">そのまま続けることもできる</span>よ
+      </div>` : '';
     return `
       ${last}
       <h2 class="scr-title">${d.turn}のサイコロ ${ill('dice','inline-illust')}</h2>
       <h1 class="title">${d.label}<span style="font-size:.5em">の平均年収</span></h1>
+      ${job70}
       <button class="bigbtn" data-a="splashGo">${esc(state.teams[0].name)} からスタート！</button>`;
   },
 
