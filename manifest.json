@@ -1,0 +1,16 @@
+{
+  "name": "人生選択ゲーム",
+  "short_name": "人生選択",
+  "description": "マネリテDAOの人生選択ゲーム。進路を選んでサイコロを振って、お金との付き合い方を学ぼう！",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFDE59",
+  "theme_color": "#F7A400",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
