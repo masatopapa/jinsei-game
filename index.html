@@ -5,8 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>人生選択ゲーム</title>
 <meta name="theme-color" content="#F7A400">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png?v=2">
+<meta name="apple-mobile-web-app-title" content="人生選択">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -220,6 +223,24 @@
   .confetti { position:fixed; top:-5vh; font-size:clamp(16px,2.5vw,30px); pointer-events:none;
     animation:fall linear forwards; z-index:50; }
   @keyframes fall { to { transform:translateY(115vh) rotate(720deg); opacity:.9; } }
+
+  /* ===== ホーム画面に追加する方法（2026-11-15）===== */
+  .homehow {
+    background:#fff; color:#8A6A3A; border:3px dashed #E8D6A8; border-radius:999px;
+    padding:.45em 1.4em; font-size:clamp(14px,1.8vw,20px); font-weight:bold;
+  }
+  .homehow:active { background:#FFF0E5; }
+  .home-ov { position:fixed; inset:0; background:rgba(74,53,32,.55); display:flex;
+    align-items:flex-start; justify-content:center; padding:3vh 14px; overflow-y:auto; z-index:60; }
+  .home-ov[hidden] { display:none; }
+  .home-box { background:#FFF9E8; border-radius:20px; max-width:560px; width:100%; margin:auto;
+    padding:22px 20px; box-shadow:0 6px 0 rgba(0,0,0,.12); font-size:clamp(15px,1.8vw,19px); line-height:1.65; }
+  .home-box h2 { text-align:center; font-size:clamp(22px,3vw,32px); }
+  .home-lead { text-align:center; color:#7A5C30; font-weight:bold; margin:.2em 0 .8em; }
+  .home-step { background:#fff; border:3px solid #E8D6A8; border-radius:14px; padding:.7em .9em; margin:.6em 0; }
+  .home-step b { color:#E85D2F; }
+  .home-note { font-size:.88em; color:#8A6A3A; margin-top:.8em; }
+  .home-box .bigbtn { display:block; margin:1em auto 0; font-size:clamp(18px,2.4vw,26px); }
 </style>
 </head>
 <body>
@@ -233,9 +254,28 @@
 </div>
 <div id="stage"></div>
 <div id="foot"></div>
+<div class="home-ov" id="homeOv" hidden>
+  <div class="home-box" role="dialog" aria-label="ホーム画面に追加する方法">
+    <h2>ホーム画面に追加</h2>
+    <p class="home-lead">アイコンから、すぐにひらけるようになります。</p>
+    <div class="home-step"><b>iPhone（Safari）</b><br>
+      <b>①</b> 画面の下の共有ボタン（四角から矢印が上に出ているマーク）をタップ。見当たらないときは「…」の中にあります。<br>
+      <b>②</b>「ホーム画面に追加」をタップ。<br>
+      <b>③</b> 右上の「追加」をタップ。</div>
+    <div class="home-step"><b>Android（Chrome）</b><br>
+      <b>①</b> 右上の「︙」をタップ。<br>
+      <b>②</b>「ホーム画面に追加」をタップ（「アプリをインストール」と出ることもあります）。<br>
+      <b>③</b>「インストール」または「追加」をタップ。</div>
+    <p class="home-note">LINEなどのアプリの中で開いているときは、メニューの「ブラウザで開く」などで Safari／Chrome に切り替えてから追加してください。</p>
+    <button class="bigbtn" data-a="homeClose">とじる</button>
+  </div>
+</div>
 
 <script>
 'use strict';
+
+/* ホーム画面のアイコンから開いているか（そのときは「ホーム画面に追加する方法」を出さない） */
+const IS_STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
 /* ================= ゲームデータ =================
    出典: Canvaスライド「人生選択ゲーム」/ スプレッドシート「選択ゲームプログラム」
@@ -410,6 +450,7 @@ const SCREENS = {
       <div class="setup-label">サイコロのふり方</div>
       <div class="opt-row">${modes}</div>
       <button class="bigbtn" data-a="start" style="margin-top:2vh">ゲームスタート！</button>
+      ${IS_STANDALONE ? '' : '<button class="homehow" data-a="homeHow">📲 ホーム画面に追加する方法</button>'}
       <div class="note">マネリテDAO</div>`;
   },
 
@@ -910,7 +951,12 @@ const actions = {
     confettiDone = false;
     render();
   },
+  homeHow() { const ov = document.getElementById('homeOv'); ov.hidden = false; ov.scrollTop = 0; },
+  homeClose() { document.getElementById('homeOv').hidden = true; },
 };
+document.getElementById('homeOv').addEventListener('click', (e) => {
+  if (e.target.id === 'homeOv') e.target.hidden = true;
+});
 
 window.App = {
   setName(i, v) { state.names[i] = v; },
